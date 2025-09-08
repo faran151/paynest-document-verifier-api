@@ -1,0 +1,57 @@
+# -------------------------
+# Python
+# -------------------------
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pkl
+*.egg-info/
+*.log
+*.sqlite3
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# VSCode / IDEs
+.vscode/
+.idea/
+
+# -------------------------
+# Docker
+# -------------------------
+*.dockerfile
+*.tar
+*.bak
+*.swp
+.dockerignore
+
+# -------------------------
+# Terraform
+# -------------------------
+infrastructure/.terraform/
+infrastructure/.terraform.lock.hcl
+infrastructure/terraform.tfstate
+infrastructure/terraform.tfstate.*
+infrastructure/*.tfvars
+infrastructure/*.tfvars.json
+infrastructure/crash.log
+infrastructure/override.tf
+infrastructure/override.tf.json
+infrastructure/*_override.tf
+infrastructure/*_override.tf.json
+terraform.tfstate
+terraform.tfstate.*
+.terraform/
+.terraform.lock.hcl
+
+# -------------------------
+# OS files
+# -------------------------
+.DS_Store
+Thumbs.db

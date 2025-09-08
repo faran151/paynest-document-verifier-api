@@ -1,0 +1,33 @@
+version: 0.2
+
+env:
+  variables:
+    IMAGE_NAME: document-verifier
+
+phases:
+  pre_build:
+    commands:
+      - echo "Resolving repo and logging in to ECR..."
+      - ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+      - REGION=${AWS_DEFAULT_REGION:-${AWS_REGION}}
+      - if [ -z "${ECR_REPO_URI}" ]; then export ECR_REPO_URI="${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/${IMAGE_NAME}"; fi
+      - aws ecr get-login-password --region "${REGION}" | docker login --username AWS --password-stdin "${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com"
+      - COMMIT_SHA=$(printf '%s' "${CODEBUILD_RESOLVED_SOURCE_VERSION}" | grep -Eo '^[0-9a-f]{7}')
+      - if [ -z "$COMMIT_SHA" ]; then COMMIT_SHA=$(printf '%s' "${CODEBUILD_RESOLVED_SOURCE_VERSION}" | grep -Eo '^[0-9a-f]{40}' | cut -c1-7); fi
+      - if [ -z "$COMMIT_SHA" ]; then COMMIT_SHA=$(printf '%s' "${CODEBUILD_BUILD_ID}" | sed -E 's/.*://; s/[^A-Za-z0-9_.-]//g' | cut -c1-7); fi
+      - echo "ECR_REPO_URI=${ECR_REPO_URI}"; echo "COMMIT_SHA=${COMMIT_SHA}"
+  build:
+    commands:
+      - echo "Building image..."
+      - docker build -t "${ECR_REPO_URI}:${COMMIT_SHA}" -t "${ECR_REPO_URI}:prod" -f app/Dockerfile .
+  post_build:
+    commands:
+      - echo "Pushing images..."
+      - docker push "${ECR_REPO_URI}:${COMMIT_SHA}"
+      - docker push "${ECR_REPO_URI}:prod"
+      - printf '{"repository":"%s","tag":"%s","imageUri":"%s:%s"}' "${ECR_REPO_URI}" "${COMMIT_SHA}" "${ECR_REPO_URI}" "${COMMIT_SHA}" > imageDetail.json
+
+artifacts:
+  files:
+    - imageDetail.json
+    - pipeline/appspec-deploy.yml
